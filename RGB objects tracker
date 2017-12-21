@@ -1,0 +1,125 @@
+from collections import deque
+import numpy as np 
+import imutils
+import cv2
+
+greenlower = (29,86,6)
+greenupper = (64,255,255)
+
+red_lower = (136,87,111)
+red_upper = (180,255,255)
+
+
+blue_lower = (99,115,150)
+blue_upper = (110,255,255)
+
+
+pts = deque(maxlen=50)
+ptsred = deque(maxlen=50)
+ptsblue = deque(maxlen=50)
+camera = cv2.VideoCapture(0)
+
+while True:
+    ret, frame = camera.read()
+
+    if cv2.waitKey(10) & 0xFF == ord('q'):
+        break
+
+    frame = imutils.resize(frame, width=600)
+
+    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+
+    mask1 = cv2.inRange(hsv, greenlower, greenupper)
+    mask1 = cv2.erode(mask1, None, iterations=2)
+    mask1 = cv2.dilate(mask1, None, iterations=2)
+    cnts1 = cv2.findContours(mask1.copy(),cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)[-2]
+    cv2.imshow('mask1',mask1)
+    
+    mask2 = cv2.inRange(hsv, red_lower, red_upper)
+    mask2 = cv2.erode(mask2, None, iterations=2)
+    mask2 = cv2.dilate(mask2, None, iterations=2)
+    cnts2 = cv2.findContours(mask2.copy(),cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)[-2]
+    cv2.imshow('mask2',mask2)
+
+    mask3 = cv2.inRange(hsv, blue_lower, blue_upper)
+    mask3 = cv2.erode(mask3, None, iterations=2)
+    mask3 = cv2.dilate(mask3, None, iterations=2)
+    cnts3 = cv2.findContours(mask3.copy(),cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)[-2]
+    cv2.imshow('mask3',mask3)
+    
+    
+    center = None
+
+    if len(cnts1)>0:
+        print(cnts1)
+        c = max(cnts1,key=cv2.contourArea)
+        ((x,y), radius) = cv2.minEnclosingCircle(c)
+        center = (int(x), int(y))
+        radius = int(radius)
+
+        if radius>10:
+            font= cv2.FONT_HERSHEY_SIMPLEX
+            cv2.circle(frame, center, radius, (0,255,255),2)
+            cv2.putText(frame,"green",(int(x),int(y)),font,1,(0,255,0),2,cv2.LINE_AA)
+            cv2.circle(frame, center, 5, (0,0,255),-1)
+
+    pts.appendleft(center)
+    for i in range(1,len(pts)):
+        if pts[i-1] is None or pts[i] is None:
+            continue
+
+        cv2.line(frame, pts[i-1], pts[i],(0,0,255), 10 )
+
+    if len(cnts2)>0:
+        print(cnts2)
+        c = max(cnts2,key=cv2.contourArea)
+        ((x,y), radius) = cv2.minEnclosingCircle(c)
+        center = (int(x), int(y))
+        radius = int(radius)
+
+        if radius>10:
+            font= cv2.FONT_HERSHEY_SIMPLEX
+            cv2.circle(frame, center, radius, (0,255,255),2)
+            cv2.putText(frame,"red",(int(x),int(y)),font,1,(0,255,0),2,cv2.LINE_AA)
+            cv2.circle(frame, center, 5, (0,0,255),-1)    
+
+    ptsred.appendleft(center)
+    for i in range(1,len(ptsred)):
+        if ptsred[i-1] is None or ptsred[i] is None:
+            continue
+
+        cv2.line(frame, ptsred[i-1], ptsred[i],(0,0,255), 10 )
+
+
+    if len(cnts3)>0:
+        print(cnts3)
+        c = max(cnts3,key=cv2.contourArea)
+        ((x,y), radius) = cv2.minEnclosingCircle(c)
+        center = (int(x), int(y))
+        radius = int(radius)
+
+        if radius>10:
+            font= cv2.FONT_HERSHEY_SIMPLEX
+            cv2.circle(frame, center, radius, (0,255,255),2)
+            cv2.putText(frame,"blue",(int(x),int(y)),font,1,(0,255,0),2,cv2.LINE_AA)
+            cv2.circle(frame, center, 5, (0,0,255),-1)    
+
+    ptsblue.appendleft(center)
+    for i in range(1,len(ptsblue)):
+        if ptsblue[i-1] is None or ptsblue[i] is None:
+            continue
+
+        cv2.line(frame, ptsblue[i-1], ptsblue[i],(0,0,255), 10 )
+
+        
+
+    cv2.imshow('Frame', frame)
+
+
+
+
+
+
+
+cv2.destroyAllWindows()
+camera.release()
