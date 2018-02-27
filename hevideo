@@ -1,0 +1,30 @@
+import cv2
+import numpy as np
+
+cap = cv2.VideoCapture("Night traffic in Mumbai- office-goers return home in the dark(1).mp4")
+
+while True:
+    
+    ret,bgr = cap.read()
+
+    bgr_or = bgr
+    
+    lab = cv2.cvtColor(bgr, cv2.COLOR_BGR2LAB)
+
+    lab_planes = cv2.split(lab)
+
+    clahe = cv2.createCLAHE(clipLimit=2.0,tileGridSize=(8,8))
+
+    lab_planes[0] = clahe.apply(lab_planes[0])
+
+    lab = cv2.merge(lab_planes)
+
+    bgr = cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
+
+    cv2.imshow('bgr_or',bgr_or)
+    cv2.imshow('bgr',bgr)
+
+    if cv2.waitKey(10) & 0xFF == ord('q'):
+        break
+cv2.destroyAllWindows()
+cap.release()
